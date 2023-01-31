@@ -7,6 +7,7 @@ import time
 import re
 from urllib.request import urlopen
 
+# レース結果データをスクレイピングする関数
 def race_results(race_id_list):
   #race_idをkeyにしてDataFrame型を格納
   race_results = {}
@@ -75,7 +76,7 @@ def race_results(race_id_list):
   return race_results_df
 
 
-#馬の過去成績データを処理するクラス
+#馬の過去成績データをスクレイピングする関数
 def horse_results(horse_id_list):
     #horse_idをkeyにしてDataFrame型を格納
     horse_results = {}
@@ -102,7 +103,7 @@ def horse_results(horse_id_list):
 
     return horse_results_df
 
-#払い戻し表データを処理するクラス
+#払い戻し表データをスクレイピングする関数
 def return_results(race_id_list):
     return_tables = {}
     for race_id in tqdm(race_id_list):
