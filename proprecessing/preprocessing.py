@@ -42,11 +42,53 @@ def race_preprocessing(race_results):
     df["枠番"] = df["枠番"].astype(int)
 
     # 不要な列を削除
-    df.drop(["タイム", "着差", "調教師", "性齢", "馬体重", '馬名', '騎手', '着順'], axis=1, inplace=True)
+    df.drop(["タイム", "着差", "調教師", "性齢", "馬体重", '馬名', '騎手'], axis=1, inplace=True)
     #開催場所
     df['place'] = df.index.map(lambda x:str(x)[4:6])
 	
     return df
+
+# 馬情報の前処理
+def horse_preprocessing(horse_results):
+  df = horse_results[['日付', '着順', '賞金', "頭数"]]
+
+  # 数値以外の欠損値を削除
+  df["着順"] = pd.to_numeric(df["着順"], errors="coerce")
+  df.dropna(subset=["着順"], inplace=True)
+  df["着順"] = df["着順"].astype(int)
+
+  # 賞金のNANを0で埋める
+  df["賞金"].fillna(0, inplace=True)
+
+  # (1 - 着順/頭数)の計算
+  df["着順/頭数"] = (1 - df["着順"] / df["頭数"]) * 100
+
+  # 日付型に変換
+  df["date"] = pd.to_datetime(df["日付"])
+  df.drop(["日付"], axis=1, inplace=True)
+  return df
+
+# 馬情報とレース情報をマージする関数
+def merge_race_with_horse(race_results, horse_results, n_samples={3, 5, 7, "all"}):
+  df_r = race_results.copy()
+  df_h = horse_results.copy()
+  date_list = df_r["date"].unique()
+  for n_sample in n_samples:
+    merged_all_df = pd.DataFrame()
+    for date in date_list:
+      df = df_r[df_r["date"] == date]
+      horse_id_list = df["horse_id"]
+      target_df = df_h.loc[horse_id_list]
+      if n_sample == "all":
+        filtered_df = target_df[target_df["date"] < date]
+      else:
+        filtered_df = target_df[target_df["date"] < date].sort_values("date", ascending = False).groupby(level=0).head(n_sample)
+      average_df = filtered_df.groupby(level=0)[["着順", "賞金", "着順/頭数"]].mean()
+      average_df.rename(columns={"着順":"着順_{}R".format(n_sample), "賞金":"賞金_{}R".format(n_sample) ,"着順/頭数":"着順/頭数_{}R".format(n_sample)},inplace=True)
+      merged_df = pd.merge(df, average_df, how="left", left_on="horse_id", right_index=True)
+      merged_all_df = pd.concat([merged_all_df, merged_df])
+    df_r = merged_all_df.copy()
+  return df_r
 
 # 払い戻しの前処理
 
