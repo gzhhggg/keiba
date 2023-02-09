@@ -2,13 +2,14 @@ import pandas as pd
 
 
 # 3着以内に入る確率を予測
-def predict_proba(model, X):
+def predict_proba(model, X, std=True):
     proba = pd.Series(model.predict_proba(X, axis=1)[:, 1], index=X.index)
     # レース内で標準化して、相対評価する。「レース内偏差値」みたいなもの。
     standard_scaler = lambda x: (x - x.mean()) / x.std(ddof=0)
     proba = proba.groupby(level=0).transform(standard_scaler)
     # データ全体を0~1にする
-    # proba = (proba - proba.min()) / (proba.max() - proba.min())
+    if std:
+        proba = (proba - proba.min()) / (proba.max() - proba.min())
     return proba
 
 
