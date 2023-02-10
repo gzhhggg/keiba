@@ -1,2 +1,8 @@
-# 環境構築
+# 使用ライブラリのインストール
+
+```bash
+pip install -r requirements.txt
+```
+
+# ディレクトリ構造
 
